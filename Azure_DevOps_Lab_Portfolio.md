@@ -15,7 +15,7 @@ This lab portfolio showcases your hands-on experience with Azure DevOps practice
 - Issues labeled and tracked via milestones.
 
 <details>
-<summary> Show the Lab 01 note </summary>
+    <summary> Show the Lab 01 note </summary>
 
     ## A: Create a GitHub Repo, Project, and Project Board
 
