@@ -23,7 +23,7 @@ This lab demonstrates how to set up GitHub repositories, milestones, issues, pro
 
 ---
 
-## Exercise 1: Create a GitHub Repo, Project, and Project Board
+## A: Create a GitHub Repo, Project, and Project Board
 
 💡 **Purpose**: Establish the foundation for Agile planning and tracking by organizing work into milestones, issues, and visual project boards.
 
@@ -118,7 +118,7 @@ To find out more, refer to GitHub documentation [about Projects](https://docs.gi
 
 ---
 
-## Exercise 2: Create and Manage Project Board Items
+## B: Create and Manage Project Board Items
 
 > ✍️ **Items can be added as drafts or linked to existing issues. These represent actionable work.**
 
