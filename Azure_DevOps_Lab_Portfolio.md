@@ -44,9 +44,6 @@ git config --global user.email "john.doe@contoso.com"
 <details>
 <summary> Show the Lab 02 note </summary>
 
-
----
-
 ## A: Create a GitHub Repo, Project, and Project Board
 
 > 💡 **Purpose**: Establish the foundation for Agile planning and tracking by organizing work into milestones, issues, and visual project boards.
@@ -362,8 +359,6 @@ To find out more, refer to [GitHub documentation](https://docs.github.com/issues
 8. Refresh project board to confirm item is in `Done`
 
 > 🧪 **Automation makes boards self-updating — reducing manual status changes.**
-
----
 
 </details>
 
