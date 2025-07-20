@@ -342,6 +342,173 @@ body {
 
 ---
 
+## Lab 03 – Implement CI/CD with GitHub Actions and IaC with Bicep
+
+### Objectives
+- Define GitHub Actions workflows.
+- Use Bicep to provision Azure App Services.
+
+### Key Concepts
+- Infrastructure as Code (IaC) with Bicep.
+- CI/CD using GitHub Actions.
+
+<details>
+<summary>📁 Show Lab 03 </summary>
+
+# Exercise 0: Prepare the Azure subscription for the lab
+
+> ⚙️ **Purpose**: Ensure all necessary Azure resource providers are registered for successful deployment.
+
+If using a new Azure subscription, some Azure resource providers may not yet be registered. Registering them early helps prevent deployment issues later in the lab.
+
+1. Open [Azure Portal](https://portal.azure.com).
+2. Sign in with your Microsoft Entra ID account.
+3. Search for **Subscriptions**, and select your active subscription.
+4. Under your subscription, go to **Resource providers**.
+5. Locate `Microsoft.CloudShell` and click **Register**.
+
+> ⏱️ *Note: This can take a few minutes, but you may proceed to the next exercise immediately.*
+
+---
+
+# Exercise 1: Implement Infrastructure as Code (IaC) and CI/CD with GitHub Actions and a Bicep template
+
+> 🚀 **Purpose**: Use GitHub Actions and Bicep templates to automatically deploy and configure a .NET App Service in Azure.
+
+## Task 1: Fork and review the GitHub repository
+
+> 📦 **Goal**: Clone a pre-built repository that includes the .NET source, GitHub Actions workflow, and Bicep infrastructure-as-code templates.
+
+1. Ensure you're signed in to GitHub.
+2. Navigate to the `eShopOnWeb` repository.
+3. Click **Fork** and choose:
+   - **Owner**: Your GitHub account
+   - **Repo name**: `eShopOnWeb`
+   - ✅ Leave **Copy the main branch only** checked
+4. Confirm the repo was forked and the branch is `main`.
+
+**🔍 Repo Structure Overview:**
+- `.github/workflows/eshoponweb-cicd.yml` – GitHub Actions workflow
+- `infra/webapp.bicep` – Azure Bicep deployment template
+- `src/Web` – Web App source code
+
+**💡 Key Concepts**:
+- `buildandtest` job compiles and tests the code.
+- `deploy` job provisions Azure infrastructure and deploys the app.
+- `RESOURCE-GROUP` is an environment variable used in the workflow.
+- A GitHub Secret is used to securely authenticate to Azure.
+
+---
+
+## Task 2: Configure the target environment
+
+> 🧱 **Goal**: Set up Azure resources and secrets necessary for CI/CD to function.
+
+### 🔧 Create Two Resource Groups
+
+1. In Azure Portal → **Resource groups** → **+ Create**
+2. First Group:
+   - Name: `rg-eshoponweb-westeurope`
+   - Region: `(Europe) West Europe`
+3. Second Group:
+   - Name: `rg-eshoponweb-eastus`
+   - Region: `(US) East US`
+
+### 🔐 Create a Service Principal
+
+1. Open **Azure Cloud Shell** (Bash).
+2. Store your subscription ID:
+
+```bash
+SUBSCRIPTION_ID=$(az account show --query id --output tsv)
+echo $SUBSCRIPTION_ID
+```
+
+3. Create the service principal:
+
+```bash
+az ad sp create-for-rbac --name "devopsfoundationslabsp" --role contributor --scopes /subscriptions/$SUBSCRIPTION_ID --json-auth
+```
+
+> 📋 Save the JSON output (clientId, clientSecret, etc.).
+
+### 🔑 Add GitHub Secret
+
+1. Go to your forked GitHub repo → **Settings > Secrets > Actions**
+2. Add a new secret:
+   - Name: `AZURE_CREDENTIALS`
+   - Value: Paste JSON from above
+
+### 🌐 Generate Web App Names
+
+```bash
+echo devops-webapp-westeurope-$RANDOM$RANDOM
+echo devops-webapp-eastus-$RANDOM$RANDOM
+```
+
+> 📋 Save the names. You’ll use them in the deployment step.
+
+---
+
+## Task 3: Validate the IaC and CI/CD functionality
+
+> 🧪 **Goal**: Trigger GitHub Actions workflow to provision and deploy your app.
+
+### 🛠 Modify Workflow for First Deployment
+
+1. Go to `.github/workflows/eshoponweb-cicd.yml`
+2. Click ✏️ Edit and update:
+
+```yaml
+on: workflow_dispatch
+RESOURCE-GROUP: rg-eshoponweb-westeurope
+subscriptionId: <your-subscription-id>
+webappName: <first-generated-webapp-name>
+```
+
+3. Click **Commit changes**.
+
+4. Open `infra/webapp.bicep` and update line 2:
+
+```bicep
+param sku string = 'S1' // The SKU of App Service Plan
+```
+
+5. Commit changes again.
+
+### ▶️ Trigger GitHub Action
+
+1. Navigate to **Actions > eShopOnWeb Build and Test**
+2. Click **Run workflow > Branch: main > Run workflow**
+
+Monitor the progress:
+- First `buildandtest` job
+- Then `deploy` job
+
+> 💡 Re-run jobs if any step fails.
+
+### 🔁 Modify for Second Deployment
+
+Repeat workflow changes for:
+- RESOURCE-GROUP: `rg-eshoponweb-eastus`
+- webappName: second generated name
+
+Then trigger workflow again and verify success.
+
+---
+
+## 🔍 Final Validation
+
+1. In Azure Portal, search **App Services**.
+2. Select each deployed app (`devops-webapp-*`) and click the domain.
+3. Confirm the site loads and shows your deployed app.
+
+> ✅ Leave resources running for the next lab.
+
+</details>
+
+---
+
 ## Lab 04 – Enhance Resiliency with Traffic Manager & Chaos Studio
 
 ### Scenario
@@ -351,46 +518,64 @@ Your team supports an online retail store experiencing intermittent regional out
 - **Azure Traffic Manager**: Global DNS-based load balancer
 - **Azure Chaos Studio**: Fault injection to test app resilience
 
-### Part 1 – Configure Traffic Manager
-```bash
-az network traffic-manager profile create \
-  --name devopsfoundationstmprofile \
-  --resource-group rg-devops-foundations \
-  --routing-method Priority \
-  --ttl 5 \
-  --protocol HTTPS \
-  --port 443 \
-  --path "/" \
-  --unique-dns-name <unique_name>
-```
-
-- Added endpoints for East US (priority 1) and West Europe (priority 2)
-- Enabled health checks
-
-### Part 2 – Simulate Failure with Chaos Studio
-```bash
-az chaos experiment create \
-  --name DevOps_Foundations_Labs_Experiment_01 \
-  --resource-group rg-devops-foundations \
-  --location westeurope \
-  --experiment-file experiment.json
-```
-
-- Stopped East US App Service for 10 minutes.
-- Verified Traffic Manager rerouted traffic to West Europe.
-
-### Validation Commands
-```bash
-nslookup <your_traffic_manager_profile>.trafficmanager.net
-```
-
-Run multiple times after 5 seconds to observe failover.
-
 <details>
-<summary> Show the Lab 04 note </summary>
+<summary>📁 Show Lab 04</summary>
 
+## ⚙️ Exercise 0: Prepare the Azure Subscription for the Lab
+
+> 🔍 **What this does**: Registers Azure Chaos Studio's provider in your subscription. This is needed before you can use Chaos Studio experiments.
+
+...
+
+## 🌐 Exercise 1: Enhance Workload Resiliency using Azure Traffic Manager
+
+> 🎯 **Goal**: Use Azure Traffic Manager to route user traffic across two regions for high availability and fault tolerance.
+
+### Task 1: Implement a Traffic Manager Profile
+...
+
+> 💡 **Explanation**: By setting priority-based routing, Azure will direct all traffic to East US unless that endpoint fails. TTL is reduced to 5s for faster failover.
+
+...
+
+### Task 2: Validate Traffic Manager Functionality
+...
+
+> 🔍 **Explanation**: Verifies if DNS failover is working by simulating failure and watching for region redirection.
+
+...
+
+## 💣 Exercise 2: Test Workload Resiliency using Azure Chaos Studio
+
+> 🧠 **Goal**: Simulate service failure using Azure Chaos Studio and verify that Traffic Manager reroutes traffic properly.
+
+### Task 1: Configure Chaos Studio Environment
+...
+
+> 💡 **Explanation**: Registers the app in East US as a Chaos Studio target. This sets up controlled failure testing.
+
+...
+
+### Task 2: Implement an Experiment
+...
+
+> 🎯 **Explanation**: Simulates downtime by stopping the web app in East US. The failover logic should push traffic to West Europe.
+
+...
+
+### Task 3: Validate the Experiment
+...
+
+> 🧪 **Explanation**: Ensures Chaos Studio stopped the East US app and Traffic Manager rerouted to West Europe.
+
+...
+
+## 🧹 Exercise 3: Clean Up Resources
+
+> ⚠️ **Reminder**: Delete all test resource groups to avoid ongoing charges. Keep your GitHub repo for portfolio use.
 
 </details>
+
 
 ---
 
