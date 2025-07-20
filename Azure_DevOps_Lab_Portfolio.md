@@ -17,7 +17,7 @@ This lab portfolio showcases your hands-on experience with Azure DevOps practice
 
 
 <details>
-<summary>📁 Show Lab 01: DevOps GitHub Projects Lab – Annotated Tutorial</summary>
+<summary>📁 Show Lab 01 </summary>
 
 This lab demonstrates how to set up GitHub repositories, milestones, issues, projects, and project boards using Agile principles. Each step is **annotated** to help you understand the purpose behind the action.
 
